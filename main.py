@@ -1,27 +1,34 @@
 import os
 import sys
-import time
 
-from PIL import Image
+import cv2
 
+RETURN = '\033[39;49m'
 
-RETURN = '\033[39;49m\n'
+vidcap = cv2.VideoCapture('video2.mp4')
+success, image = vidcap.read()
+count = 0
+while success:
+    success, image = vidcap.read()
 
-img = Image.open("test.png").convert("RGB")
+    rows, cols, _ = image.shape
 
-to_print = []
-for y in range(img.height):
-    for x in range(img.width):
-        r, g, b= img.getpixel((x, y))
-        to_print.append(f'\033[38;2;255;82;197;48;2;{r};{g};{b}m  ')
+    print("\033[1A"*rows, end="")
 
-    to_print += RETURN
+    for y in range(rows):
+        for x in range(cols):
+            b, g, r = image[y, x]
+            print(f'\033[38;2;255;82;197;48;2;{r};{g};{b}m  ', end="", flush=False)
 
-print("Please dezoom")
+            #Utiliser les charactères ▀ et ▄ pour préciser le dessin
 
-while os.get_terminal_size()[0] < img.width*2:
-    time.sleep(0.1)
+        print(RETURN, flush=False)
 
-sys.stdout.write("".join(to_print))
+    count += 1
+
+    sys.stdout.flush()
+
+vidcap.release()
+
 
 input()
