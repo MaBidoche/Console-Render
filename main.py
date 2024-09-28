@@ -20,6 +20,7 @@ class VideoReader:
 
 
     def play(self, filename):
+        os.system("cls")
         self.vidcap = cv2.VideoCapture(filename)
         self.count = 0
         print("\033[?25l", end="")
@@ -57,12 +58,15 @@ class Explorer:
     def __init__(self, app_):
         self.dir = ["C:/", "Users"]
         self.cursor = 0
+        self.scrolling = 0
         self.app = app_
         self.files = os.listdir(os.path.join(*self.dir))
 
     def scroll(self, index):
         self.cursor += index
         self.cursor %= len(self.files)
+        if self.cursor - self.scrolling > os.get_terminal_size()[1]-8:
+            self.scrolling += 1
 
     def enter(self):
         if os.path.isdir(os.path.join(*self.dir, self.files[self.cursor])):
@@ -85,13 +89,19 @@ class Explorer:
         print(("██" + " " * (os.get_terminal_size()[0] - 4)) + "██")  # Skip one
         line -= 1
 
-        for i, file in enumerate(self.files):
+        for i in range(self.scrolling, len(self.files)):
+            file = self.files[i]
             s = "●" if i == self.cursor else "○"
             is_d = os.path.isdir(os.path.join(*self.dir, file))
             f = "📁 " if is_d else "📄 "
 
             print(f"██  {s} {f}" + file + " " * (os.get_terminal_size()[0] - 11 - len(file)) + "██")
             line -= 1
+            if line == 1:
+                if i < len(self.files):
+                    print(("██  ▼ ▼ ▼" + " " * (os.get_terminal_size()[0] - 11)) + "██")
+                    line -= 1
+                break
 
         for _ in range(line):
             print(("██" + " " * (os.get_terminal_size()[0]-4)) + "██")
