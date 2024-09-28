@@ -9,6 +9,7 @@ WIDTH = 128
 
 CLEAR = "\033[2J"
 RESET_CURSOR = "\033[H"
+HIDE_CURSOR = "\033[?25l"
 
 
 class VideoReader:
@@ -23,10 +24,12 @@ class VideoReader:
         os.system("cls")
         self.vidcap = cv2.VideoCapture(filename)
         self.count = 0
-        print("\033[?25l", end="")
+        print(HIDE_CURSOR, end="")
         self.playing = True
 
-    def update(self):
+    def update(self, full_refresh=False):
+        if full_refresh:
+            os.system("cls")
         self.playing, image = self.vidcap.read()
 
         image = cv2.resize(image, (WIDTH, int(WIDTH / image.shape[1] * image.shape[0])))
@@ -51,7 +54,7 @@ class VideoReader:
     def stop(self):
         self.vidcap.release()
         self.playing = False
-        print(CLEAR + "\033[?25l", end="")
+        print(CLEAR, end="")
 
 
 class Explorer:
@@ -86,6 +89,7 @@ class Explorer:
             self.dir.append(self.files[self.cursor])
             self.files = os.listdir(os.path.join(*self.dir))
             self.cursor = 0
+            self.scrolling = 0
         elif os.path.isfile(os.path.join(*self.dir, self.files[self.cursor])):
             self.app.start_video(os.path.join(*self.dir, self.files[self.cursor]))
 
@@ -96,10 +100,13 @@ class Explorer:
     def update(self, full_refresh=False):
         if full_refresh:
             os.system("cls")
-        print(RESET_CURSOR + ("█"*(os.get_terminal_size()[0])))  # First line
+        print(HIDE_CURSOR + RESET_CURSOR + ("█"*(os.get_terminal_size()[0])))  # First line
         line = os.get_terminal_size()[1]-3
 
-        print(("██" + " " * (os.get_terminal_size()[0] - 4)) + "██")  # Skip one
+        if self.scrolling:
+            print(("██  ▲ ▲ ▲" + " " * (os.get_terminal_size()[0] - 11)) + "██")
+        else:
+            print(("██" + " " * (os.get_terminal_size()[0] - 4)) + "██")
         line -= 1
 
         for i in range(self.scrolling, len(self.files)):
@@ -160,7 +167,12 @@ class App:
                     self.explorer.update(True)
 
             elif self.mode == 1:
-                self.video.update()
+                term_size = os.get_terminal_size()
+                if last_size != term_size:
+                    last_size = term_size
+                    self.video.update(True)
+                else:
+                    self.video.update()
                 if not self.video.playing:
                     self.video.stop()
                     self.mode = 0
