@@ -30,7 +30,11 @@ class VideoReader:
     def update(self, full_refresh=False):
         if full_refresh:
             os.system("cls")
+
         self.playing, image = self.vidcap.read()
+
+        if not self.playing:
+            return
 
         image = cv2.resize(image, (WIDTH, int(WIDTH / image.shape[1] * image.shape[0])))
 
