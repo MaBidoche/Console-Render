@@ -64,9 +64,22 @@ class Explorer:
 
     def scroll(self, index):
         self.cursor += index
-        self.cursor %= len(self.files)
+        if self.cursor < 0:
+            self.scrolling = len(self.files) - os.get_terminal_size()[1]+5
+            self.cursor = len(self.files)-1
+        if self.cursor >= len(self.files):
+            self.scrolling = 0
+            self.cursor = 0
+
         if self.cursor - self.scrolling > os.get_terminal_size()[1]-8:
             self.scrolling += 1
+        if self.cursor - self.scrolling < 2:
+            self.scrolling -= 1
+
+        if self.scrolling < 0:
+            self.scrolling = 0
+        if self.scrolling >= len(self.files):
+            self.scrolling = len(self.files)-1
 
     def enter(self):
         if os.path.isdir(os.path.join(*self.dir, self.files[self.cursor])):
@@ -98,7 +111,7 @@ class Explorer:
             print(f"██  {s} {f}" + file + " " * (os.get_terminal_size()[0] - 11 - len(file)) + "██")
             line -= 1
             if line == 1:
-                if i < len(self.files):
+                if i < len(self.files)-1:
                     print(("██  ▼ ▼ ▼" + " " * (os.get_terminal_size()[0] - 11)) + "██")
                     line -= 1
                 break
