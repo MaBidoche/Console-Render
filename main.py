@@ -58,35 +58,37 @@ class Explorer:
         self.dir = ["C:/", "Users"]
         self.cursor = 0
         self.app = app_
+        self.files = os.listdir(os.path.join(*self.dir))
 
     def scroll(self, index):
         self.cursor += index
+        self.cursor %= len(self.files)
 
     def enter(self):
-        files = os.listdir(os.path.join(*self.dir))
-        if os.path.isdir(os.path.join(*self.dir, files[self.cursor])):
-            self.dir.append(files[self.cursor])
+        if os.path.isdir(os.path.join(*self.dir, self.files[self.cursor])):
+            self.dir.append(self.files[self.cursor])
+            self.files = os.listdir(os.path.join(*self.dir))
             self.cursor = 0
-        elif os.path.isfile(os.path.join(*self.dir, files[self.cursor])):
-            self.app.start_video(os.path.join(*self.dir, files[self.cursor]))
+        elif os.path.isfile(os.path.join(*self.dir, self.files[self.cursor])):
+            self.app.start_video(os.path.join(*self.dir, self.files[self.cursor]))
 
     def back(self):
         self.dir.pop()
         self.cursor = 0
 
-    def update(self):
+    def update(self, full_refresh=False):
+        if full_refresh:
+            os.system("cls")
         print(RESET_CURSOR + ("█"*(os.get_terminal_size()[0])))  # First line
         line = os.get_terminal_size()[1]-3
 
         print(("██" + " " * (os.get_terminal_size()[0] - 4)) + "██")  # Skip one
         line -= 1
 
-        files = os.listdir(os.path.join(*self.dir))
-
-        for i, file in enumerate(files):
+        for i, file in enumerate(self.files):
             s = "●" if i == self.cursor else "○"
             is_d = os.path.isdir(os.path.join(*self.dir, file))
-            f = "📁 " if is_d else "   "
+            f = "📁 " if is_d else "📄 "
 
             print(f"██  {s} {f}" + file + " " * (os.get_terminal_size()[0] - 11 - len(file)) + "██")
             line -= 1
@@ -108,6 +110,8 @@ class App:
 
     def loop(self):
         self.explorer.update()
+
+        last_size = ()
         while True:
             if self.mode == 0:
                 if keyboard.is_pressed("down"):
@@ -127,11 +131,21 @@ class App:
                     self.explorer.update()
                     time.sleep(0.2)
 
+                term_size = os.get_terminal_size()
+                if last_size != term_size:
+                    last_size = term_size
+                    self.explorer.update(True)
+
             elif self.mode == 1:
                 self.video.update()
+                if not self.video.playing:
+                    self.video.stop()
+                    self.mode = 0
+                    self.explorer.update()
                 if keyboard.get_hotkey_name() == "space":
                     self.video.stop()
                     self.mode = 0
+                    self.explorer.update()
 
 
 
