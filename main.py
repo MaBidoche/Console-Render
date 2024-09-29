@@ -98,14 +98,17 @@ class Explorer:
             self.app.start_video(os.path.join(*self.dir, self.files[self.cursor]))
 
     def back(self):
-        self.dir.pop()
-        self.cursor = 0
+        if len(self.dir) > 1:
+            self.dir.pop()
+            self.files = os.listdir(os.path.join(*self.dir))
+            self.update()
+            self.cursor = 0
 
     def update(self, full_refresh=False):
         if full_refresh:
             os.system("cls")
         print(HIDE_CURSOR + RESET_CURSOR + ("█"*(os.get_terminal_size()[0])))  # First line
-        line = os.get_terminal_size()[1]-3
+        line = os.get_terminal_size()[1]-4
 
         if self.scrolling:
             print(("██  ▲ ▲ ▲" + " " * (os.get_terminal_size()[0] - 11)) + "██")
@@ -130,6 +133,7 @@ class Explorer:
         for _ in range(line):
             print(("██" + " " * (os.get_terminal_size()[0]-4)) + "██")
         print(("█" * (os.get_terminal_size()[0])))
+        print("    [esc] parent folder;  [↓] [↑] select file/folder;  [q] quit;  [enter] Play file/open folder")
 
 
 class App:
@@ -185,8 +189,6 @@ class App:
                     self.video.stop()
                     self.mode = 0
                     self.explorer.update()
-
-
 
 
 app = App()
