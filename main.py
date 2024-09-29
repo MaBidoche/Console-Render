@@ -190,6 +190,10 @@ class App:
                     self.mode = 0
                     self.explorer.update()
 
+            if keyboard.is_pressed("q"):
+                if self.mode == 1:
+                    self.video.stop()
+                break
 
 app = App()
 app.loop()
